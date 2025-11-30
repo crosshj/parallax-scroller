@@ -2,7 +2,7 @@
   "name": "My Parallax Demo",
   "short_name": "Parallax",
   "start_url": "/",
-  "display": "fullscreen",
+  "display": "standalone",
   "scope": "/",
   "orientation": "landscape",
   "background_color": "#020617",
