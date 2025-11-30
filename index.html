@@ -2,12 +2,13 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Fullscreen test</title>
-    <link rel="manifest" href="/manifest.json" />
+    <title>Parallax Page</title>
+    <link rel="manifest" href="/manifest.json?v={{COMMIT_SHA}}" />
     <meta name="theme-color" content="#020617" />
     <meta name="mobile-web-app-capable" content="yes" />
   </head>
   <body>
-    Parallax
+    <div>Parallax</div>
+    <div>Current SHA: {{COMMIT_SHA}}</div>
   </body>
 </html>

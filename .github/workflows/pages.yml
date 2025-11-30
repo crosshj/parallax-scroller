@@ -21,6 +21,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Replace tokens in HTML
+        run: |
+          sed -i "s|{{COMMIT_SHA}}|${{ github.sha }}|g" index.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
