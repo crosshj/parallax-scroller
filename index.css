@@ -1,5 +1,6 @@
 .commit-sha {
   max-width: 9ch;
   overflow: hidden;
-  display: inline-block;
+  display: inline-flex;
+  font-family: monospace;
 }
