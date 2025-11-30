@@ -1,3 +1,34 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+body {
+  background-color: #020617;
+  color: white;
+  position: relative;
+}
+
+body > * {
+  padding-left: max(env(safe-area-inset-left), 10px);
+  padding-right: max(env(safe-area-inset-right), 10px);
+}
+
+body > :first-child {
+  padding-top: max(env(safe-area-inset-top), 10px);
+}
+
+body > :last-child {
+  padding-bottom: max(env(safe-area-inset-bottom), 10px);
+}
+
 .commit-sha {
   max-width: 9ch;
   overflow: hidden;
