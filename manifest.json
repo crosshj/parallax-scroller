@@ -1,8 +1,9 @@
 {
   "name": "My Parallax Demo",
   "short_name": "Parallax",
-  "start_url": ".",
+  "start_url": "./",
   "display": "fullscreen",
+  "scope": "./",
   "orientation": "landscape",
   "background_color": "#020617",
   "theme_color": "#020617"
