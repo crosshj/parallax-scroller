@@ -23,6 +23,7 @@ let lastTime = 0;
 let rafId = null;
 let needsRender = true;
 let lastDimensionUpdate = 0;
+let velocityHistory = [];
 
 // Load all images
 let loadedCount = 0;
@@ -250,6 +251,7 @@ function handleStart(x) {
   lastX = x * initialDpr; // Convert CSS pixels to canvas pixels
   lastTime = Date.now();
   velocity = 0; // Stop any momentum scrolling
+  velocityHistory = []; // Clear velocity history
 }
 
 function handleMove(x) {
@@ -260,9 +262,15 @@ function handleMove(x) {
   const deltaTime = now - lastTime;
   const deltaX = canvasX - lastX;
 
-  // Calculate velocity for momentum
+  // Track velocity over recent history for smoother momentum
   if (deltaTime > 0) {
-    velocity = (deltaX / deltaTime) * 16; // Normalize to ~60fps
+    const instantVelocity = deltaX / deltaTime;
+    velocityHistory.push({ velocity: instantVelocity, time: now });
+    
+    // Keep only last 5 samples (about 80ms of history)
+    if (velocityHistory.length > 5) {
+      velocityHistory.shift();
+    }
   }
 
   const newScrollOffset = scrollOffset - deltaX;
@@ -290,22 +298,47 @@ function handleMove(x) {
 
 function handleEnd() {
   isDragging = false;
+  
+  // Calculate average velocity from recent history for smoother momentum
+  if (velocityHistory.length > 0) {
+    const now = Date.now();
+    // Only use very recent samples (within last 50ms)
+    const recentSamples = velocityHistory.filter(s => now - s.time < 50);
+    
+    if (recentSamples.length > 0) {
+      const avgVelocity = recentSamples.reduce((sum, s) => sum + s.velocity, 0) / recentSamples.length;
+      // Scale up for momentum (pixels per frame at 60fps)
+      velocity = avgVelocity * 16;
+    } else {
+      velocity = 0;
+    }
+  }
+  
   // Start momentum scrolling
   startMomentum();
 }
 
 function startMomentum() {
-  const friction = 0.95; // Friction coefficient (0-1, higher = less friction)
-  const minVelocity = 0.1; // Stop when velocity gets very small
+  const deceleration = 0.92; // Slower initial deceleration
+  const minVelocity = 0.5; // Higher threshold before stopping
 
   function momentumStep() {
-    if (Math.abs(velocity) < minVelocity) {
+    // Use exponential decay with threshold cutoff
+    const absVelocity = Math.abs(velocity);
+    
+    if (absVelocity < minVelocity) {
       velocity = 0;
       return;
     }
 
-    // Apply friction
-    velocity *= friction;
+    // Apply deceleration - more aggressive as velocity decreases
+    if (absVelocity > 10) {
+      velocity *= deceleration; // Slower decay for fast scrolling
+    } else if (absVelocity > 3) {
+      velocity *= 0.88; // Medium decay
+    } else {
+      velocity *= 0.8; // Faster decay near the end
+    }
 
     const newScrollOffset = scrollOffset - velocity;
 
