@@ -9,8 +9,8 @@ const ctx = canvas.getContext("2d");
 
 // Three layer images for parallax effect
 const layers = {
-  back: { img: new Image(), loaded: false, speed: 0.01 }, // Background (slowest)
-  middle: { img: new Image(), loaded: false, speed: 0.2 }, // Mid-ground
+  back: { img: new Image(), loaded: false, speed: 0.04 }, // Background (slowest)
+  middle: { img: new Image(), loaded: false, speed: 0.12 }, // Mid-ground
   front: { img: new Image(), loaded: false, speed: 1.0 }, // Foreground (fastest)
 };
 
