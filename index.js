@@ -16,8 +16,10 @@ const layers = {
 
 // Scroll offset (0 = centered, negative = scroll left, positive = scroll right)
 let scrollOffset = 0;
+let velocity = 0;
 let isDragging = false;
 let lastX = 0;
+let lastTime = 0;
 
 // Load all images
 let loadedCount = 0;
@@ -143,12 +145,22 @@ function updateViewportDimensions() {
 function handleStart(x) {
   isDragging = true;
   lastX = x;
+  lastTime = Date.now();
+  velocity = 0; // Stop any momentum scrolling
 }
 
 function handleMove(x) {
   if (!isDragging) return;
 
+  const now = Date.now();
+  const deltaTime = now - lastTime;
   const deltaX = x - lastX;
+
+  // Calculate velocity for momentum
+  if (deltaTime > 0) {
+    velocity = (deltaX / deltaTime) * 16; // Normalize to ~60fps
+  }
+
   const newScrollOffset = scrollOffset - deltaX;
 
   // Calculate the max scroll range based on the foreground layer
@@ -167,6 +179,7 @@ function handleMove(x) {
   }
 
   lastX = x;
+  lastTime = now;
 
   drawCanvas();
   updateViewportDimensions();
@@ -174,6 +187,60 @@ function handleMove(x) {
 
 function handleEnd() {
   isDragging = false;
+  // Start momentum scrolling
+  startMomentum();
+}
+
+function startMomentum() {
+  const friction = 0.95; // Friction coefficient (0-1, higher = less friction)
+  const minVelocity = 0.1; // Stop when velocity gets very small
+
+  function momentumStep() {
+    if (Math.abs(velocity) < minVelocity) {
+      velocity = 0;
+      return;
+    }
+
+    // Apply friction
+    velocity *= friction;
+
+    const newScrollOffset = scrollOffset - velocity;
+
+    // Calculate the max scroll range based on the foreground layer
+    const canvasWidth = canvas.width;
+    const frontLayer = layers.front;
+
+    if (frontLayer.loaded) {
+      const frontMaxScroll = (frontLayer.img.width - canvasWidth) / 2;
+      const previousScrollOffset = scrollOffset;
+
+      // Clamp scroll offset to foreground layer's limits
+      scrollOffset = Math.max(
+        -frontMaxScroll,
+        Math.min(frontMaxScroll, newScrollOffset)
+      );
+
+      // If we hit a boundary, stop momentum
+      if (
+        scrollOffset === previousScrollOffset &&
+        scrollOffset !== newScrollOffset
+      ) {
+        velocity = 0;
+        return;
+      }
+    } else {
+      scrollOffset = newScrollOffset;
+    }
+
+    drawCanvas();
+    updateViewportDimensions();
+
+    requestAnimationFrame(momentumStep);
+  }
+
+  if (Math.abs(velocity) >= minVelocity) {
+    requestAnimationFrame(momentumStep);
+  }
 }
 
 // Mouse events
