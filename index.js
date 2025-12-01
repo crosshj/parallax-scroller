@@ -20,6 +20,8 @@ let velocity = 0;
 let isDragging = false;
 let lastX = 0;
 let lastTime = 0;
+let rafId = null;
+let needsRender = false;
 
 // Load all images
 let loadedCount = 0;
@@ -221,6 +223,19 @@ function updateViewportDimensions() {
   )}`;
 }
 
+function renderLoop() {
+  if (needsRender) {
+    drawCanvas();
+    updateViewportDimensions();
+    needsRender = false;
+  }
+  rafId = requestAnimationFrame(renderLoop);
+}
+
+function requestRender() {
+  needsRender = true;
+}
+
 // Mouse/Touch event handlers for scrolling
 function handleStart(x) {
   isDragging = true;
@@ -261,8 +276,7 @@ function handleMove(x) {
   lastX = x;
   lastTime = now;
 
-  drawCanvas();
-  updateViewportDimensions();
+  requestRender();
 }
 
 function handleEnd() {
@@ -312,9 +326,7 @@ function startMomentum() {
       scrollOffset = newScrollOffset;
     }
 
-    drawCanvas();
-    updateViewportDimensions();
-
+    requestRender();
     requestAnimationFrame(momentumStep);
   }
 
@@ -365,6 +377,9 @@ canvas.addEventListener(
 
 // Initialize once
 initCanvas();
+
+// Start the render loop
+renderLoop();
 
 // Only update dimensions display on resize, not canvas itself
 window.addEventListener("resize", updateViewportDimensions);
