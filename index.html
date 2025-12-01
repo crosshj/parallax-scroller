@@ -18,9 +18,12 @@
     <link rel="stylesheet" href="index.css?v={{COMMIT_SHA}}" />
   </head>
   <body>
-    <div>Parallax</div>
-    <div>Current SHA: <span class="commit-sha">{{COMMIT_SHA}}</span></div>
-    <div id="viewport-dimensions"></div>
+    <canvas id="canvas"></canvas>
+    <div id="info">
+      <div>Parallax</div>
+      <div>Current SHA: <span class="commit-sha">{{COMMIT_SHA}}</span></div>
+      <div id="viewport-dimensions"></div>
+    </div>
   </body>
   <script type="module" src="index.js?v={{COMMIT_SHA}}"></script>
 </html>
