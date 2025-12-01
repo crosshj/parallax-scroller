@@ -13,6 +13,10 @@ img.onload = function () {
 };
 img.src = "/images/sample_bg.png?v={{COMMIT_SHA}}";
 
+// Store initial dimensions to prevent canvas from resizing
+let initialWidth, initialHeight, initialDpr;
+let isInitialized = false;
+
 function drawCanvas() {
   const rect = canvas.getBoundingClientRect();
 
@@ -40,16 +44,27 @@ function drawCanvas() {
   );
 }
 
-function resizeCanvas() {
+function initCanvas() {
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
 
-  // Set canvas internal dimensions to match physical pixels
+  // Store initial dimensions
+  initialWidth = rect.width;
+  initialHeight = rect.height;
+  initialDpr = dpr;
+
+  // Set explicit CSS dimensions to lock the canvas size
+  canvas.style.width = `${rect.width}px`;
+  canvas.style.height = `${rect.height}px`;
+
+  // Set canvas internal dimensions to match physical pixels (only once)
   canvas.width = Math.round(rect.width * dpr);
   canvas.height = Math.round(rect.height * dpr);
 
   // Scale context to ensure 1 canvas pixel = 1 physical pixel
   ctx.scale(dpr, dpr);
+
+  isInitialized = true;
 
   if (img.complete) {
     drawCanvas();
@@ -61,13 +76,14 @@ function updateViewportDimensions() {
   const width = window.innerWidth;
   const height = window.innerHeight;
   const dpr = window.devicePixelRatio || 1;
-  const physicalWidth = Math.round(width * dpr);
-  const physicalHeight = Math.round(height * dpr);
 
   document.getElementById(
     "viewport-dimensions"
   ).textContent = `Canvas: ${canvas.width} x ${canvas.height} pixels | Viewport: ${width} x ${height} CSS pixels (DPR: ${dpr})`;
 }
 
-resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
+// Initialize once
+initCanvas();
+
+// Only update dimensions display on resize, not canvas itself
+window.addEventListener("resize", updateViewportDimensions);
