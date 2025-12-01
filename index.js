@@ -227,14 +227,14 @@ function updateViewportDimensions() {
 function renderLoop() {
   if (needsRender) {
     drawCanvas();
-    
+
     // Only update dimensions display occasionally (not every frame)
     const now = Date.now();
     if (now - lastDimensionUpdate > 100) {
       updateViewportDimensions();
       lastDimensionUpdate = now;
     }
-    
+
     needsRender = false;
   }
   rafId = requestAnimationFrame(renderLoop);
