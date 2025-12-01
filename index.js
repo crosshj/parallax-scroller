@@ -33,17 +33,6 @@ function drawCanvas() {
   const centerY = Math.floor(cssHeight / 2);
   ctx.fillStyle = "#ff0000";
   ctx.fillRect(centerX, centerY, 1, 1);
-
-  // Add text overlay showing canvas resolution
-  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-  ctx.fillRect(10, cssHeight - 30, 300, 25);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "12px monospace";
-  ctx.fillText(
-    `Canvas: ${canvas.width}×${canvas.height}px | Red pixel at (${centerX}, ${centerY})`,
-    15,
-    cssHeight - 12
-  );
 }
 
 function initCanvas() {
