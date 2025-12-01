@@ -53,10 +53,6 @@ function initCanvas() {
   initialHeight = rect.height;
   initialDpr = dpr;
 
-  // Set explicit CSS dimensions to lock the canvas size
-  canvas.style.width = `${rect.width}px`;
-  canvas.style.height = `${rect.height}px`;
-
   // Set canvas internal dimensions to match physical pixels (only once)
   canvas.width = Math.round(rect.width * dpr);
   canvas.height = Math.round(rect.height * dpr);
