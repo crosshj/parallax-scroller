@@ -9,8 +9,8 @@ const ctx = canvas.getContext("2d");
 
 // Three layer images for parallax effect
 const layers = {
-  back: { img: new Image(), loaded: false, speed: 0.2 }, // Background (slowest)
-  middle: { img: new Image(), loaded: false, speed: 0.5 }, // Mid-ground
+  back: { img: new Image(), loaded: false, speed: 0.1 }, // Background (slowest)
+  middle: { img: new Image(), loaded: false, speed: 0.3 }, // Mid-ground
   front: { img: new Image(), loaded: false, speed: 1.0 }, // Foreground (fastest)
 };
 
@@ -149,7 +149,23 @@ function handleMove(x) {
   if (!isDragging) return;
 
   const deltaX = x - lastX;
-  scrollOffset -= deltaX; // Subtract to make drag feel natural (drag right = scroll left)
+  const newScrollOffset = scrollOffset - deltaX;
+
+  // Calculate the max scroll range based on the foreground layer
+  const canvasWidth = canvas.width;
+  const frontLayer = layers.front;
+
+  if (frontLayer.loaded) {
+    const frontMaxScroll = (frontLayer.img.width - canvasWidth) / 2;
+    // Clamp scroll offset to foreground layer's limits
+    scrollOffset = Math.max(
+      -frontMaxScroll,
+      Math.min(frontMaxScroll, newScrollOffset)
+    );
+  } else {
+    scrollOffset = newScrollOffset;
+  }
+
   lastX = x;
 
   drawCanvas();
