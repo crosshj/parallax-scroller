@@ -25,6 +25,7 @@ jobs:
       - name: Replace tokens in HTML
         run: |
           sed -i "s|{{COMMIT_SHA}}|${{ github.sha }}|g" index.html
+          sed -i "s|{{COMMIT_SHA}}|${{ github.sha }}|g" index.js
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
