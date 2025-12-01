@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"
     />
     <title>Parallax Page</title>
     <link rel="manifest" href="manifest.json?v={{COMMIT_SHA}}" />
@@ -20,8 +20,7 @@
   <body>
     <canvas id="canvas"></canvas>
     <div id="info">
-      <div>Parallax</div>
-      <div>Current SHA: <span class="commit-sha">{{COMMIT_SHA}}</span></div>
+      <div>Version: <span class="commit-sha">{{COMMIT_SHA}}</span></div>
       <div id="viewport-dimensions"></div>
     </div>
   </body>

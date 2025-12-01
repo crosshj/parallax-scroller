@@ -22,7 +22,6 @@ let lastX = 0;
 let lastTime = 0;
 let rafId = null;
 let needsRender = true;
-let lastDimensionUpdate = 0;
 let velocityHistory = [];
 
 // Load all images
@@ -216,26 +215,14 @@ function updateViewportDimensions() {
   const height = window.innerHeight;
   const dpr = window.devicePixelRatio || 1;
 
-  document.getElementById("viewport-dimensions").textContent = `Canvas: ${
-    canvas.width
-  } x ${
-    canvas.height
-  } pixels | Viewport: ${width} x ${height} CSS pixels (DPR: ${dpr}) | Scroll: ${Math.round(
-    scrollOffset
-  )}`;
+  document.getElementById(
+    "viewport-dimensions"
+  ).textContent = `Canvas: ${canvas.width} x ${canvas.height} pixels | Viewport: ${width} x ${height} CSS pixels (DPR: ${dpr})`;
 }
 
 function renderLoop() {
   if (needsRender) {
     drawCanvas();
-
-    // Only update dimensions display occasionally (not every frame)
-    const now = Date.now();
-    if (now - lastDimensionUpdate > 100) {
-      updateViewportDimensions();
-      lastDimensionUpdate = now;
-    }
-
     needsRender = false;
   }
   rafId = requestAnimationFrame(renderLoop);
@@ -266,7 +253,7 @@ function handleMove(x) {
   if (deltaTime > 0) {
     const instantVelocity = deltaX / deltaTime;
     velocityHistory.push({ velocity: instantVelocity, time: now });
-    
+
     // Keep only last 5 samples (about 80ms of history)
     if (velocityHistory.length > 5) {
       velocityHistory.shift();
@@ -298,22 +285,24 @@ function handleMove(x) {
 
 function handleEnd() {
   isDragging = false;
-  
+
   // Calculate average velocity from recent history for smoother momentum
   if (velocityHistory.length > 0) {
     const now = Date.now();
     // Only use very recent samples (within last 50ms)
-    const recentSamples = velocityHistory.filter(s => now - s.time < 50);
-    
+    const recentSamples = velocityHistory.filter((s) => now - s.time < 50);
+
     if (recentSamples.length > 0) {
-      const avgVelocity = recentSamples.reduce((sum, s) => sum + s.velocity, 0) / recentSamples.length;
+      const avgVelocity =
+        recentSamples.reduce((sum, s) => sum + s.velocity, 0) /
+        recentSamples.length;
       // Scale up for momentum (pixels per frame at 60fps)
       velocity = avgVelocity * 16;
     } else {
       velocity = 0;
     }
   }
-  
+
   // Start momentum scrolling
   startMomentum();
 }
@@ -325,7 +314,7 @@ function startMomentum() {
   function momentumStep() {
     // Use exponential decay with threshold cutoff
     const absVelocity = Math.abs(velocity);
-    
+
     if (absVelocity < minVelocity) {
       velocity = 0;
       return;
