@@ -22,13 +22,19 @@ function drawCanvas() {
   // Draw the image to fill the canvas
   ctx.drawImage(img, 0, 0, rect.width, rect.height);
 
+  // Draw a single red pixel in the exact center (in CSS coordinates)
+  const centerX = Math.floor(rect.width / 2);
+  const centerY = Math.floor(rect.height / 2);
+  ctx.fillStyle = "#ff0000";
+  ctx.fillRect(centerX, centerY, 1, 1);
+
   // Add text overlay showing canvas resolution
   ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
   ctx.fillRect(10, rect.height - 30, 300, 25);
   ctx.fillStyle = "#ffffff";
   ctx.font = "12px monospace";
   ctx.fillText(
-    `Canvas: ${canvas.width}×${canvas.height}px`,
+    `Canvas: ${canvas.width}×${canvas.height}px | Red pixel at (${centerX}, ${centerY})`,
     15,
     rect.height - 12
   );
