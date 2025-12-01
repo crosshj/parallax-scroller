@@ -29,12 +29,12 @@ Object.entries(layers).forEach(([name, layer]) => {
   layer.img.onload = function () {
     layer.loaded = true;
     loadedCount++;
-    
+
     // Add ruler markings to the middle layer after it loads
-    if (name === 'middle') {
+    if (name === "middle") {
       addRulerToMiddleLayer(layer.img);
     }
-    
+
     if (loadedCount === totalLayers && isInitialized) {
       drawCanvas();
     }
@@ -49,52 +49,56 @@ let isInitialized = false;
 
 function addRulerToMiddleLayer(img) {
   // Create an offscreen canvas to draw on the image
-  const offscreenCanvas = document.createElement('canvas');
+  const offscreenCanvas = document.createElement("canvas");
   offscreenCanvas.width = img.width;
   offscreenCanvas.height = img.height;
-  const offscreenCtx = offscreenCanvas.getContext('2d');
-  
+  const offscreenCtx = offscreenCanvas.getContext("2d");
+
   // Draw the original image
   offscreenCtx.drawImage(img, 0, 0);
-  
+
   // Setup for ruler
   const centerX = img.width / 2;
   const interval = 100; // Pixels between tick marks
   const tickHeight = 30; // Height of tick marks
   const fontSize = 20;
   const yPosition = 50; // Distance from top of image
-  
-  offscreenCtx.strokeStyle = '#ffffff';
-  offscreenCtx.fillStyle = '#ffffff';
+
+  offscreenCtx.strokeStyle = "#ffffff";
+  offscreenCtx.fillStyle = "#ffffff";
   offscreenCtx.lineWidth = 2;
   offscreenCtx.font = `${fontSize}px monospace`;
-  offscreenCtx.textAlign = 'center';
-  offscreenCtx.textBaseline = 'top';
-  
+  offscreenCtx.textAlign = "center";
+  offscreenCtx.textBaseline = "top";
+
   // Draw tick marks and labels from center outward
-  for (let i = -Math.floor(img.width / interval); i <= Math.floor(img.width / interval); i++) {
-    const x = centerX + (i * interval);
+  for (
+    let i = -Math.floor(img.width / interval);
+    i <= Math.floor(img.width / interval);
+    i++
+  ) {
+    const x = centerX + i * interval;
     const pixelValue = i * interval;
-    
+
     // Skip if outside image bounds
     if (x < 0 || x > img.width) continue;
-    
+
     // Draw tick mark
     offscreenCtx.beginPath();
     offscreenCtx.moveTo(x, yPosition);
     offscreenCtx.lineTo(x, yPosition + tickHeight);
     offscreenCtx.stroke();
-    
+
     // Draw label
     offscreenCtx.fillText(pixelValue.toString(), x, yPosition + tickHeight + 5);
   }
-  
+
   // Draw horizontal ruler line
   offscreenCtx.beginPath();
   offscreenCtx.moveTo(0, yPosition);
   offscreenCtx.lineTo(img.width, yPosition);
   offscreenCtx.stroke();
-  
+
   // Replace the image source with the modified version
   img.src = offscreenCanvas.toDataURL();
 }
