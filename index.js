@@ -132,11 +132,12 @@ const contentLoaded = () => {
 
     const source = frontLayer.rulerCanvas || frontLayer.img;
     const imgWidth = source.width;
+    const canvasWidth = canvas.width; // device px
 
-    if (imgWidth <= canvasWidthCss) {
+    if (imgWidth <= canvasWidth) {
       maxScroll = 0;
     } else {
-      maxScroll = (imgWidth - canvasWidthCss) / 2;
+      maxScroll = (imgWidth - canvasWidth) / 2;
     }
 
     clampScrollOffset();
@@ -150,9 +151,11 @@ const contentLoaded = () => {
   function drawCanvas() {
     if (!isInitialized) return;
 
-    ctx.clearRect(0, 0, canvasWidthCss, canvasHeightCss);
+    const canvasWidth = canvas.width; // device px
+    const canvasHeight = canvas.height; // device px
 
-    // Draw each layer with parallax offset
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
     Object.values(layers).forEach((layer) => {
       if (!layer.loaded) return;
 
@@ -160,53 +163,52 @@ const contentLoaded = () => {
       const imgWidth = source.width;
       const imgHeight = source.height;
 
-      // Apply parallax speed to scroll offset
       const layerOffset = scrollOffset * layer.speed;
 
-      // Centered: start from (imgWidth - canvasWidthCss)/2, then offset
-      const sourceX = (imgWidth - canvasWidthCss) / 2 + layerOffset;
+      const sourceX = (imgWidth - canvasWidth) / 2 + layerOffset;
 
-      // Draw visible slice
       ctx.drawImage(
         source,
         sourceX,
         0,
-        canvasWidthCss,
+        canvasWidth,
         imgHeight,
         0,
         0,
-        canvasWidthCss,
-        canvasHeightCss
+        canvasWidth,
+        canvasHeight
       );
     });
 
-    // Debug: red pixel at canvas center
-    const centerX = Math.floor(canvasWidthCss / 2);
-    const centerY = Math.floor(canvasHeightCss / 2);
+    // Debug: red pixel at canvas center (device px)
+    const centerX = Math.floor(canvasWidth / 2);
+    const centerY = Math.floor(canvasHeight / 2);
     ctx.fillStyle = "#ff0000";
     ctx.fillRect(centerX, centerY, 1, 1);
   }
 
   // Initialize canvas once, based on initial viewport
   function initCanvas() {
-    const rawDpr = window.devicePixelRatio || 1;
-    const maxDpr = 2; // cap if needed
-    const dpr = Math.min(rawDpr, maxDpr);
-
+    const dpr = window.devicePixelRatio || 1;
     canvasDpr = dpr;
-    canvasWidthCss = window.innerWidth;
-    canvasHeightCss = window.innerHeight;
 
-    canvas.style.width = `${canvasWidthCss}px`;
-    canvas.style.height = `${canvasHeightCss}px`;
+    // Use screen dimensions so they match how you authored the art
+    const screenWidth = window.screen.width;
+    const screenHeight = window.screen.height;
 
-    canvas.width = Math.round(canvasWidthCss * dpr);
-    canvas.height = Math.round(canvasHeightCss * dpr);
+    canvasWidthCss = screenWidth;
+    canvasHeightCss = screenHeight;
 
-    // Work in CSS pixels in all logic
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    canvas.style.width = `${screenWidth}px`;
+    canvas.style.height = `${screenHeight}px`;
 
-    // Prevent touch scrolling / gestures over the canvas
+    // Internal canvas in device pixels
+    canvas.width = Math.round(screenWidth * dpr);
+    canvas.height = Math.round(screenHeight * dpr);
+
+    // No transform: all drawing is in device pixels
+    // ctx.setTransform(...) is removed
+
     canvas.style.touchAction = "none";
 
     isInitialized = true;
@@ -226,7 +228,9 @@ const contentLoaded = () => {
 
     const info = document.getElementById("viewport-dimensions");
     if (info) {
-      info.textContent = `Canvas: ${canvas.width} x ${canvas.height} physical px | Viewport: ${width} x ${height} CSS px (DPR: ${dpr})`;
+      info.textContent =
+        `Canvas: ${canvas.width} x ${canvas.height} physical px | ` +
+        `Viewport: ${width} x ${height} CSS px (DPR: ${dpr})`;
     }
   }
 
@@ -288,23 +292,24 @@ const contentLoaded = () => {
   // Input handling
   // -----------------
 
-  function handleStart(x) {
+  function handleStart(xCss) {
     isDragging = true;
-    lastX = x;
+    lastX = xCss * canvasDpr; // CSS → device
     lastTime = performance.now();
     velocityPxPerMs = 0;
     velocityHistory = [];
   }
 
-  function handleMove(x) {
+  function handleMove(xCss) {
     if (!isDragging) return;
 
     const now = performance.now();
+    const canvasX = xCss * canvasDpr; // CSS → device
     const deltaTime = now - lastTime;
-    const deltaX = x - lastX;
+    const deltaX = canvasX - lastX; // device px
 
     if (deltaTime > 0) {
-      const instantVelocity = deltaX / deltaTime; // px/ms
+      const instantVelocity = deltaX / deltaTime; // device px / ms
       velocityHistory.push({ velocity: instantVelocity, time: now });
       if (velocityHistory.length > 5) velocityHistory.shift();
     }
@@ -312,7 +317,7 @@ const contentLoaded = () => {
     scrollOffset -= deltaX;
     clampScrollOffset();
 
-    lastX = x;
+    lastX = canvasX;
     lastTime = now;
 
     requestRender();
