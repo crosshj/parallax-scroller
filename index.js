@@ -21,7 +21,7 @@ let isDragging = false;
 let lastX = 0;
 let lastTime = 0;
 let rafId = null;
-let needsRender = false;
+let needsRender = true;
 let lastDimensionUpdate = 0;
 
 // Load all images
