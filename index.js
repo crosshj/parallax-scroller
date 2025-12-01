@@ -51,6 +51,14 @@ function drawCanvas() {
   // Clear canvas
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
+  // Calculate the max scroll for the front layer to use as global limit
+  const frontLayer = layers.front;
+  let globalMaxScroll = Infinity;
+
+  if (frontLayer.loaded) {
+    globalMaxScroll = (frontLayer.img.width - canvasWidth) / 2;
+  }
+
   // Draw each layer with parallax offset
   Object.entries(layers).forEach(([name, layer]) => {
     if (!layer.loaded) return;
@@ -65,10 +73,16 @@ function drawCanvas() {
     // Apply parallax speed to scroll offset
     const layerOffset = scrollOffset * layer.speed;
 
+    // Clamp the layer offset to both its own max AND the global max (scaled by speed)
+    const effectiveMaxScroll = Math.min(
+      maxScroll,
+      globalMaxScroll * layer.speed
+    );
+
     // Clamp the offset to prevent showing edges
     const clampedOffset = Math.max(
-      -maxScroll,
-      Math.min(maxScroll, layerOffset)
+      -effectiveMaxScroll,
+      Math.min(effectiveMaxScroll, layerOffset)
     );
 
     // Calculate source position (which part of the image to draw)
