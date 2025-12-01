@@ -18,44 +18,52 @@ let initialWidth, initialHeight, initialDpr;
 let isInitialized = false;
 
 function drawCanvas() {
-  const rect = canvas.getBoundingClientRect();
+  // Use stored initial dimensions for drawing
+  const cssWidth = initialWidth;
+  const cssHeight = initialHeight;
 
   // Clear canvas
-  ctx.clearRect(0, 0, rect.width, rect.height);
+  ctx.clearRect(0, 0, cssWidth, cssHeight);
 
   // Draw the image to fill the canvas
-  ctx.drawImage(img, 0, 0, rect.width, rect.height);
+  ctx.drawImage(img, 0, 0, cssWidth, cssHeight);
 
   // Draw a single red pixel in the exact center (in CSS coordinates)
-  const centerX = Math.floor(rect.width / 2);
-  const centerY = Math.floor(rect.height / 2);
+  const centerX = Math.floor(cssWidth / 2);
+  const centerY = Math.floor(cssHeight / 2);
   ctx.fillStyle = "#ff0000";
   ctx.fillRect(centerX, centerY, 1, 1);
 
   // Add text overlay showing canvas resolution
   ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-  ctx.fillRect(10, rect.height - 30, 300, 25);
+  ctx.fillRect(10, cssHeight - 30, 300, 25);
   ctx.fillStyle = "#ffffff";
   ctx.font = "12px monospace";
   ctx.fillText(
     `Canvas: ${canvas.width}×${canvas.height}px | Red pixel at (${centerX}, ${centerY})`,
     15,
-    rect.height - 12
+    cssHeight - 12
   );
 }
 
 function initCanvas() {
-  const rect = canvas.getBoundingClientRect();
+  // Use screen dimensions instead of viewport
   const dpr = window.devicePixelRatio || 1;
+  const screenWidth = window.screen.width;
+  const screenHeight = window.screen.height;
 
   // Store initial dimensions
-  initialWidth = rect.width;
-  initialHeight = rect.height;
+  initialWidth = screenWidth;
+  initialHeight = screenHeight;
   initialDpr = dpr;
 
-  // Set canvas internal dimensions to match physical pixels (only once)
-  canvas.width = Math.round(rect.width * dpr);
-  canvas.height = Math.round(rect.height * dpr);
+  // Set canvas CSS size to screen dimensions
+  canvas.style.width = `${screenWidth}px`;
+  canvas.style.height = `${screenHeight}px`;
+
+  // Set canvas internal dimensions to match physical pixels
+  canvas.width = Math.round(screenWidth * dpr);
+  canvas.height = Math.round(screenHeight * dpr);
 
   // Scale context to ensure 1 canvas pixel = 1 physical pixel
   ctx.scale(dpr, dpr);
