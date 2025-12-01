@@ -1,7 +1,5 @@
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register(
-    "sw.js?v=9b9d83ae7e8c9e8f293c227739a7d6e638d99014"
-  );
+  navigator.serviceWorker.register("sw.js?v={{COMMIT_SHA}}");
 }
 
 const contentLoaded = () => {
@@ -60,7 +58,7 @@ const contentLoaded = () => {
       }
     };
 
-    layer.img.src = `/images/layers1/${name}.png?v=9b9d83ae7e8c9e8f293c227739a7d6e638d99014`;
+    layer.img.src = `/images/layers1/${name}.png?v={{COMMIT_SHA}}`;
   });
 
   function addRulerToMiddleLayer(layer) {
