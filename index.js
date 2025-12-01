@@ -22,6 +22,7 @@ let lastX = 0;
 let lastTime = 0;
 let rafId = null;
 let needsRender = false;
+let lastDimensionUpdate = 0;
 
 // Load all images
 let loadedCount = 0;
@@ -226,7 +227,14 @@ function updateViewportDimensions() {
 function renderLoop() {
   if (needsRender) {
     drawCanvas();
-    updateViewportDimensions();
+    
+    // Only update dimensions display occasionally (not every frame)
+    const now = Date.now();
+    if (now - lastDimensionUpdate > 100) {
+      updateViewportDimensions();
+      lastDimensionUpdate = now;
+    }
+    
     needsRender = false;
   }
   rafId = requestAnimationFrame(renderLoop);
@@ -239,7 +247,7 @@ function requestRender() {
 // Mouse/Touch event handlers for scrolling
 function handleStart(x) {
   isDragging = true;
-  lastX = x;
+  lastX = x * initialDpr; // Convert CSS pixels to canvas pixels
   lastTime = Date.now();
   velocity = 0; // Stop any momentum scrolling
 }
@@ -248,8 +256,9 @@ function handleMove(x) {
   if (!isDragging) return;
 
   const now = Date.now();
+  const canvasX = x * initialDpr; // Convert CSS pixels to canvas pixels
   const deltaTime = now - lastTime;
-  const deltaX = x - lastX;
+  const deltaX = canvasX - lastX;
 
   // Calculate velocity for momentum
   if (deltaTime > 0) {
@@ -273,7 +282,7 @@ function handleMove(x) {
     scrollOffset = newScrollOffset;
   }
 
-  lastX = x;
+  lastX = canvasX;
   lastTime = now;
 
   requestRender();
