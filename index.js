@@ -9,9 +9,9 @@ const ctx = canvas.getContext("2d");
 
 // Three layer images for parallax effect
 const layers = {
-  back: { img: new Image(), loaded: false, speed: 0.1 }, // Background (slowest)
-  middle: { img: new Image(), loaded: false, speed: 0.3 }, // Mid-ground
-  front: { img: new Image(), loaded: false, speed: 1.0 }, // Foreground (fastest)
+  back: { img: new Image(), loaded: false, speed: 0.05 }, // Background (slowest)
+  middle: { img: new Image(), loaded: false, speed: 0.2 }, // Mid-ground
+  front: { img: new Image(), loaded: false, speed: 1.2 }, // Foreground (fastest)
 };
 
 // Scroll offset (0 = centered, negative = scroll left, positive = scroll right)
