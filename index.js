@@ -59,17 +59,17 @@ function addRulerToMiddleLayer(img) {
 
   // Setup for ruler
   const centerX = img.width / 2;
+  const centerY = img.height / 2;
   const interval = 100; // Pixels between tick marks
   const tickHeight = 30; // Height of tick marks
   const fontSize = 20;
-  const yPosition = 50; // Distance from top of image
 
   offscreenCtx.strokeStyle = "#ffffff";
   offscreenCtx.fillStyle = "#ffffff";
   offscreenCtx.lineWidth = 2;
   offscreenCtx.font = `${fontSize}px monospace`;
   offscreenCtx.textAlign = "center";
-  offscreenCtx.textBaseline = "top";
+  offscreenCtx.textBaseline = "middle";
 
   // Draw tick marks and labels from center outward
   for (
@@ -83,20 +83,24 @@ function addRulerToMiddleLayer(img) {
     // Skip if outside image bounds
     if (x < 0 || x > img.width) continue;
 
-    // Draw tick mark
+    // Draw tick mark (vertical line at center)
     offscreenCtx.beginPath();
-    offscreenCtx.moveTo(x, yPosition);
-    offscreenCtx.lineTo(x, yPosition + tickHeight);
+    offscreenCtx.moveTo(x, centerY - tickHeight / 2);
+    offscreenCtx.lineTo(x, centerY + tickHeight / 2);
     offscreenCtx.stroke();
 
-    // Draw label
-    offscreenCtx.fillText(pixelValue.toString(), x, yPosition + tickHeight + 5);
+    // Draw label below the tick mark
+    offscreenCtx.fillText(
+      pixelValue.toString(),
+      x,
+      centerY + tickHeight / 2 + fontSize
+    );
   }
 
-  // Draw horizontal ruler line
+  // Draw horizontal ruler line through vertical center
   offscreenCtx.beginPath();
-  offscreenCtx.moveTo(0, yPosition);
-  offscreenCtx.lineTo(img.width, yPosition);
+  offscreenCtx.moveTo(0, centerY);
+  offscreenCtx.lineTo(img.width, centerY);
   offscreenCtx.stroke();
 
   // Replace the image source with the modified version
