@@ -11,7 +11,7 @@ const img = new Image();
 img.onload = function () {
   drawCanvas();
 };
-img.src = "/images/sample_bg.png";
+img.src = "/images/sample_bg.png?v={{COMMIT_SHA}}";
 
 function drawCanvas() {
   const rect = canvas.getBoundingClientRect();
