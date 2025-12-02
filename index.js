@@ -3,13 +3,29 @@ if ("serviceWorker" in navigator) {
 }
 
 const contentLoaded = () => {
+  // Check debug mode and apply class to body
+  const isDebugMode = localStorage.getItem("debugMode") === "true";
+  if (isDebugMode) {
+    document.body.classList.add("debug-mode");
+  }
+
+  // Debug toggle button
+  const debugToggle = document.getElementById("debug-toggle");
+  if (debugToggle) {
+    debugToggle.addEventListener("click", () => {
+      const currentDebugMode = localStorage.getItem("debugMode") === "true";
+      localStorage.setItem("debugMode", String(!currentDebugMode));
+      window.location.reload();
+    });
+  }
+
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
 
   // Three layer images for parallax effect
   const layers = {
-    back: { img: new Image(), loaded: false, speed: 0.04, rulerCanvas: null },
-    middle: { img: new Image(), loaded: false, speed: 0.12, rulerCanvas: null },
+    back: { img: new Image(), loaded: false, speed: 0.01, rulerCanvas: null },
+    middle: { img: new Image(), loaded: false, speed: 0.05, rulerCanvas: null },
     front: { img: new Image(), loaded: false, speed: 1.0, rulerCanvas: null },
   };
 
@@ -43,8 +59,8 @@ const contentLoaded = () => {
       layer.loaded = true;
       loadedCount++;
 
-      // Add ruler markings to the middle layer once, via offscreen canvas
-      if (name === "middle") {
+      // Add ruler markings to the middle layer once, via offscreen canvas (only in debug mode)
+      if (name === "middle" && isDebugMode) {
         addRulerToMiddleLayer(layer);
       }
 
@@ -157,6 +173,7 @@ const contentLoaded = () => {
     Object.values(layers).forEach((layer) => {
       if (!layer.loaded) return;
 
+      // Use rulerCanvas only if it exists (debug mode), otherwise use original image
       const source = layer.rulerCanvas || layer.img;
       const imgWidth = source.width;
       const imgHeight = source.height;

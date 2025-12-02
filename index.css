@@ -45,6 +45,11 @@ body {
   left: 10px;
   z-index: 10;
   pointer-events: none;
+  display: none;
+}
+
+body.debug-mode #info {
+  display: block;
 }
 
 body > * {
@@ -64,4 +69,38 @@ body > :last-child {
   overflow: hidden;
   display: inline-flex;
   font-family: monospace;
+}
+
+#debug-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+#debug-toggle {
+  border: 0;
+  svg {
+    fill: none;
+    stroke: white;
+    stroke-width: 0.5px;
+  }
+}
+.debug-mode #debug-toggle {
+  svg {
+    fill: white;
+    stroke-width: 0;
+  }
 }
