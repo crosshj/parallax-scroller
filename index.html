@@ -7,7 +7,11 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"
     />
     <title>Parallax Page</title>
-    <link rel="icon" type="image/svg+xml" href="/images/logo.svg?v={{COMMIT_SHA}}" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/images/logo.svg?v={{COMMIT_SHA}}"
+    />
     <link rel="manifest" href="manifest.json?v={{COMMIT_SHA}}" />
     <meta name="theme-color" content="#020617" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -43,4 +47,9 @@
     </button>
   </body>
   <script type="module" src="index.js?v={{COMMIT_SHA}}"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js?v={{COMMIT_SHA}}");
+    }
+  </script>
 </html>

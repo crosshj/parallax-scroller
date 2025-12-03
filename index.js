@@ -1,8 +1,10 @@
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js?v={{COMMIT_SHA}}");
-}
+import ScrollableCanvas from "./lib/ScrollableCanvas.js";
+import ImageUtils from "./lib/image.utils.js";
 
-const contentLoaded = () => {
+const layerImageUrl = (name) => `/images/layers1/${name}.png?v={{COMMIT_SHA}}`;
+const { layerImage } = ImageUtils({ layerImageUrl });
+
+const contentLoaded = async () => {
   // Check debug mode and apply class to body
   const isDebugMode = localStorage.getItem("debugMode") === "true";
   if (isDebugMode) {
@@ -19,375 +21,79 @@ const contentLoaded = () => {
     });
   }
 
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-
-  // Three layer images for parallax effect
-  const layers = {
-    back: { img: new Image(), loaded: false, speed: 0.01, rulerCanvas: null },
-    middle: { img: new Image(), loaded: false, speed: 0.05, rulerCanvas: null },
-    front: { img: new Image(), loaded: false, speed: 1.0, rulerCanvas: null },
-  };
-
-  // Scroll state (in CSS pixels)
-  let scrollOffset = 0;
-
-  // Momentum (px/ms)
-  let velocityPxPerMs = 0;
-
-  // Drag state
-  let isDragging = false;
-  let lastX = 0;
-  let lastTime = 0;
-  let velocityHistory = [];
-
-  // Canvas sizing
-  let isInitialized = false;
-  let canvasDpr = 1;
-  let canvasWidthCss = 0;
-  let canvasHeightCss = 0;
-
-  // Scroll limits (CSS px) based on front layer
-  let maxScroll = 0;
-
-  // Load all images
-  let loadedCount = 0;
-  const totalLayers = Object.keys(layers).length;
-
-  Object.entries(layers).forEach(([name, layer]) => {
-    layer.img.onload = function () {
-      layer.loaded = true;
-      loadedCount++;
-
-      // Add ruler markings to the middle layer once, via offscreen canvas (only in debug mode)
-      if (name === "middle" && isDebugMode) {
-        addRulerToMiddleLayer(layer);
-      }
-
-      // Recompute max scroll once we know image sizes
-      if (isInitialized) {
-        computeMaxScroll();
-      }
-
-      if (loadedCount === totalLayers && isInitialized) {
-        requestRender();
-      }
-    };
-
-    layer.img.src = `/images/layers1/${name}.png?v={{COMMIT_SHA}}`;
-  });
-
-  function addRulerToMiddleLayer(layer) {
-    const img = layer.img;
-
-    // Create offscreen canvas to draw on the image
-    const offscreenCanvas = document.createElement("canvas");
-    offscreenCanvas.width = img.width;
-    offscreenCanvas.height = img.height;
-    const offscreenCtx = offscreenCanvas.getContext("2d");
-
-    // Draw the original image
-    offscreenCtx.drawImage(img, 0, 0);
-
-    // Setup for ruler
-    const centerX = img.width / 2;
-    const centerY = img.height / 2;
-    const interval = 100; // Pixels between tick marks
-    const tickHeight = 30;
-    const fontSize = 20;
-
-    offscreenCtx.strokeStyle = "#ffffff";
-    offscreenCtx.fillStyle = "#ffffff";
-    offscreenCtx.lineWidth = 2;
-    offscreenCtx.font = `${fontSize}px monospace`;
-    offscreenCtx.textAlign = "center";
-    offscreenCtx.textBaseline = "middle";
-
-    // Draw tick marks and labels from center outward
-    for (
-      let i = -Math.floor(img.width / interval);
-      i <= Math.floor(img.width / interval);
-      i++
-    ) {
-      const x = centerX + i * interval;
-      const pixelValue = i * interval;
-
-      if (x < 0 || x > img.width) continue;
-
-      offscreenCtx.beginPath();
-      offscreenCtx.moveTo(x, centerY - tickHeight / 2);
-      offscreenCtx.lineTo(x, centerY + tickHeight / 2);
-      offscreenCtx.stroke();
-
-      offscreenCtx.fillText(
-        pixelValue.toString(),
-        x,
-        centerY + tickHeight / 2 + fontSize
-      );
-    }
-
-    // Horizontal ruler line
-    offscreenCtx.beginPath();
-    offscreenCtx.moveTo(0, centerY);
-    offscreenCtx.lineTo(img.width, centerY);
-    offscreenCtx.stroke();
-
-    // Store the composited canvas as the source for this layer
-    layer.rulerCanvas = offscreenCanvas;
-  }
-
-  // Compute max scroll range from the foreground layer and canvas width
-  function computeMaxScroll() {
-    const frontLayer = layers.front;
-    if (!isInitialized || !frontLayer.loaded) {
-      maxScroll = 0;
-      return;
-    }
-
-    const source = frontLayer.rulerCanvas || frontLayer.img;
-    const imgWidth = source.width;
-    const canvasWidth = canvas.width; // device px
-
-    if (imgWidth <= canvasWidth) {
-      maxScroll = 0;
-    } else {
-      maxScroll = (imgWidth - canvasWidth) / 2;
-    }
-
-    clampScrollOffset();
-  }
-
-  function clampScrollOffset() {
-    scrollOffset = Math.max(-maxScroll, Math.min(maxScroll, scrollOffset));
-  }
-
-  // Drawing in CSS pixel space (ctx is scaled by DPR)
-  function drawCanvas() {
-    if (!isInitialized) return;
-
-    const canvasWidth = canvas.width; // device px
-    const canvasHeight = canvas.height; // device px
-
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-    Object.values(layers).forEach((layer) => {
-      if (!layer.loaded) return;
-
-      // Use rulerCanvas only if it exists (debug mode), otherwise use original image
-      const source = layer.rulerCanvas || layer.img;
-      const imgWidth = source.width;
-      const imgHeight = source.height;
-
-      const layerOffset = scrollOffset * layer.speed;
-
-      const sourceX = (imgWidth - canvasWidth) / 2 + layerOffset;
-
-      ctx.drawImage(
-        source,
-        sourceX,
-        0,
-        canvasWidth,
-        imgHeight,
-        0,
-        0,
-        canvasWidth,
-        canvasHeight
-      );
-    });
-
-    // Debug: red pixel at canvas center (device px)
-    const centerX = Math.floor(canvasWidth / 2);
-    const centerY = Math.floor(canvasHeight / 2);
-    ctx.fillStyle = "#ff0000";
-    ctx.fillRect(centerX, centerY, 1, 1);
-  }
-
-  // Initialize canvas once, based on initial viewport
-  function initCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    canvasDpr = dpr;
-
-    // Use screen dimensions so they match how you authored the art
-    const screenWidth = window.screen.width;
-    const screenHeight = window.screen.height;
-
-    canvasWidthCss = screenWidth;
-    canvasHeightCss = screenHeight;
-
-    canvas.style.width = `${screenWidth}px`;
-    canvas.style.height = `${screenHeight}px`;
-
-    // Internal canvas in device pixels
-    canvas.width = Math.round(screenWidth * dpr);
-    canvas.height = Math.round(screenHeight * dpr);
-
-    // No transform: all drawing is in device pixels
-    // ctx.setTransform(...) is removed
-
-    canvas.style.touchAction = "none";
-
-    isInitialized = true;
-
-    if (loadedCount === totalLayers) {
-      computeMaxScroll();
-      requestRender();
-    }
-
-    updateViewportDimensions();
-  }
-
-  function updateViewportDimensions() {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const dpr = canvasDpr;
-
+  // Update viewport dimensions display
+  const updateViewportInfo = (scrollCanvas) => {
     const info = document.getElementById("viewport-dimensions");
-    if (info) {
+    if (info && scrollCanvas && scrollCanvas.state) {
+      const canvas = scrollCanvas.canvas;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const dpr = scrollCanvas.state.canvasDpr;
       info.textContent =
         `Canvas: ${canvas.width} x ${canvas.height} physical px | ` +
         `Viewport: ${width} x ${height} CSS px (DPR: ${dpr})`;
     }
+  };
+
+  const config = { back: {}, middle: {}, front: {} };
+  if (isDebugMode) {
+    config.back = {
+      rulerConfig: {
+        y: 400,
+      },
+    };
+    config.middle = {
+      rulerConfig: {
+        y: 650,
+      },
+      centerDotConfig: {},
+    };
+    config.front = {
+      rulerConfig: {
+        y: 900,
+      },
+    };
   }
 
-  // -----------------
-  // Momentum + render
-  // -----------------
-
-  let needsRender = true;
-
-  function requestRender() {
-    needsRender = true;
-  }
-
-  function isMoving() {
-    return Math.abs(velocityPxPerMs) > 0.001;
-  }
-
-  function updateMomentum(dtMs) {
-    if (!velocityPxPerMs) return;
-
-    // Integrate position
-    scrollOffset -= velocityPxPerMs * dtMs;
-    clampScrollOffset();
-
-    // Simple linear friction
-    const friction = 0.003; // px/ms^2
-    const sign = Math.sign(velocityPxPerMs);
-    let speed = Math.abs(velocityPxPerMs);
-    speed = Math.max(0, speed - friction * dtMs);
-
-    if (speed === 0) {
-      velocityPxPerMs = 0;
-    } else {
-      velocityPxPerMs = sign * speed;
-    }
-
-    if (speed < 0.001) {
-      velocityPxPerMs = 0;
-    }
-  }
-
-  let lastFrameTime = performance.now();
-
-  function tick(now) {
-    const dt = now - lastFrameTime;
-    lastFrameTime = now;
-
-    updateMomentum(dt);
-
-    if (needsRender || isMoving() || isDragging) {
-      drawCanvas();
-      needsRender = false;
-    }
-
-    requestAnimationFrame(tick);
-  }
-
-  // -----------------
-  // Input handling
-  // -----------------
-
-  function handleStart(xCss) {
-    isDragging = true;
-    lastX = xCss * canvasDpr; // CSS → device
-    lastTime = performance.now();
-    velocityPxPerMs = 0;
-    velocityHistory = [];
-  }
-
-  function handleMove(xCss) {
-    if (!isDragging) return;
-
-    const now = performance.now();
-    const canvasX = xCss * canvasDpr; // CSS → device
-    const deltaTime = now - lastTime;
-    const deltaX = canvasX - lastX; // device px
-
-    if (deltaTime > 0) {
-      const instantVelocity = deltaX / deltaTime; // device px / ms
-      velocityHistory.push({ velocity: instantVelocity, time: now });
-      if (velocityHistory.length > 5) velocityHistory.shift();
-    }
-
-    scrollOffset -= deltaX;
-    clampScrollOffset();
-
-    lastX = canvasX;
-    lastTime = now;
-
-    requestRender();
-  }
-
-  function handleEnd() {
-    if (!isDragging) return;
-    isDragging = false;
-
-    const now = performance.now();
-    const recentSamples = velocityHistory.filter((s) => now - s.time < 50);
-
-    if (recentSamples.length > 0) {
-      const avgVelocity =
-        recentSamples.reduce((sum, s) => sum + s.velocity, 0) /
-        recentSamples.length;
-      velocityPxPerMs = avgVelocity;
-    } else {
-      velocityPxPerMs = 0;
-    }
-
-    velocityHistory = [];
-    requestRender();
-  }
-
-  // Pointer events (covers mouse + touch)
-  canvas.addEventListener("pointerdown", (e) => {
-    canvas.setPointerCapture(e.pointerId);
-    handleStart(e.clientX);
+  // Create scrollable canvas with image promises
+  const scrollCanvas = new ScrollableCanvas({
+    canvas: document.getElementById("canvas"),
+    width: window.screen.width,
+    height: window.screen.height,
+    layers: [
+      {
+        name: "back",
+        image: layerImage("back", config.back),
+        speed: 0.01,
+      },
+      {
+        name: "middle",
+        image: layerImage("middle", config.middle),
+        speed: 0.02,
+      },
+      {
+        name: "front",
+        image: layerImage("front", config.front),
+        speed: 0.3,
+      },
+    ],
+    physics: {
+      friction: 0.003,
+      velocitySampleSize: 5,
+      velocitySampleTimeMs: 50,
+    },
+    onReady: () => {
+      updateViewportInfo(scrollCanvas);
+    },
+    onLayerLoad: ({ name, count, total }) => {
+      console.log(`Loaded ${name} (${count}/${total})`);
+    },
   });
 
-  canvas.addEventListener("pointermove", (e) => {
-    if (!isDragging) return;
-    handleMove(e.clientX);
-  });
+  await scrollCanvas.init();
 
-  canvas.addEventListener("pointerup", (e) => {
-    canvas.releasePointerCapture(e.pointerId);
-    handleEnd();
-  });
-
-  canvas.addEventListener("pointercancel", (e) => {
-    canvas.releasePointerCapture(e.pointerId);
-    handleEnd();
-  });
-
-  // ---------------
-  // Bootstrapping
-  // ---------------
-
-  initCanvas();
-  requestAnimationFrame(tick);
-
-  // Only update dimensions display on resize, not canvas itself
-  window.addEventListener("resize", updateViewportDimensions);
+  // Update viewport dimensions display on resize
+  window.addEventListener("resize", () => updateViewportInfo(scrollCanvas));
 };
 
 document.addEventListener("DOMContentLoaded", contentLoaded);
