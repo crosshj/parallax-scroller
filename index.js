@@ -1,5 +1,5 @@
-import ScrollableCanvas from "./lib/ScrollableCanvas.js";
-import ImageUtils from "./lib/image.utils.js";
+import ScrollableCanvas from "./lib/ScrollableCanvas.js?v={{COMMIT_SHA}}";
+import ImageUtils from "./lib/image.utils.js?v={{COMMIT_SHA}}";
 
 const layerImageUrl = (name) => `/images/layers1/${name}.png?v={{COMMIT_SHA}}`;
 const { layerImage } = ImageUtils({ layerImageUrl });
