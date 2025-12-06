@@ -54,6 +54,22 @@ const contentLoaded = async () => {
       },
     };
   }
+  const animatedBall =
+    ({ color = "red", xFromCenter = 100, radius = 25 } = {}) =>
+    (ctx, layerState, tick) => {
+      // Example: Draw an animated red circle
+      // Position relative to layer center and top in image coordinates
+      const yFromTop = 750 + Math.sin(tick * 0.1) * 50; // Bounce animation
+
+      // Draw directly in image coordinates - the context is already transformed
+      const x = layerState.centerX + xFromCenter;
+      const y = yFromTop;
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    };
 
   // Create scrollable canvas with image promises
   const scrollCanvas = new ScrollableCanvas({
@@ -70,11 +86,17 @@ const contentLoaded = async () => {
         name: "middle",
         image: layerImage("middle", config.middle),
         speed: 0.02,
+        render: animatedBall({
+          color: "limegreen",
+          xFromCenter: -100,
+          radius: 18,
+        }),
       },
       {
         name: "front",
         image: layerImage("front", config.front),
         speed: 0.3,
+        render: animatedBall({ color: "purple" }),
       },
     ],
     physics: {
