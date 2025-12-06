@@ -58,8 +58,8 @@ const contentLoaded = async () => {
   // Create scrollable canvas with image promises
   const scrollCanvas = new ScrollableCanvas({
     canvas: document.getElementById("canvas"),
-    width: window.screen.width,
-    height: window.screen.height,
+    width: window.innerWidth,
+    height: window.innerHeight,
     layers: [
       {
         name: "back",
@@ -93,7 +93,10 @@ const contentLoaded = async () => {
   await scrollCanvas.init();
 
   // Update viewport dimensions display on resize
-  window.addEventListener("resize", () => updateViewportInfo(scrollCanvas));
+  window.addEventListener("resize", () => {
+    scrollCanvas.resize(window.innerWidth, window.innerHeight);
+    updateViewportInfo(scrollCanvas);
+  });
 };
 
 document.addEventListener("DOMContentLoaded", contentLoaded);
